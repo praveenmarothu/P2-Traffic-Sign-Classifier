@@ -25,7 +25,7 @@ class Model(object):
 
     def init_hyper_params(self):
 
-        self.learning_rate=0.001
+        self.learning_rate=0.0005
 
     def init_network_params(self):
         self.p_features = tf.placeholder(tf.float32, [None, 32,32,1])
