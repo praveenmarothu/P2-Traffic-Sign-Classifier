@@ -1,5 +1,7 @@
 import pickle
 from sklearn.model_selection import train_test_split
+import matplotlib
+matplotlib.use('agg')
 from matplotlib import pyplot as plt
 import numpy as np
 from skimage.transform import rotate
