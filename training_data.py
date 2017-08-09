@@ -8,6 +8,7 @@ from skimage.transform import ProjectiveTransform,AffineTransform
 import random
 import cv2
 import os
+from sklearn.utils import shuffle
 
 class TrainingData(object):
 
@@ -40,6 +41,7 @@ class TrainingData(object):
 
     def split_train_valid(self):
         self.x_train,self.x_valid,self.y_train,self.y_valid=train_test_split(self.x_train,self.y_train,test_size=0.05,random_state=87878,stratify=self.y_train)
+        self.x_train,self.y_train=shuffle(self.x_train,self.y_train)
 
     def print_counts(self):
         pass
