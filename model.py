@@ -32,7 +32,7 @@ class Model(object):
         self.p_labels = tf.placeholder(tf.float32, [None,43])
 
     def create_training_operation(self):
-        cross_entropy = tf.nn.softmax_cross_entropy_with_logits(self.network, self.p_labels)
+        cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=self.network, labels=self.p_labels)
         loss_operation = tf.reduce_mean(cross_entropy)
         self.training_operation  = tf.train.AdamOptimizer(learning_rate = self.learning_rate).minimize(loss_operation)
 
@@ -45,8 +45,8 @@ class Model(object):
 
     def train(self):
 
-        EPOCHS = 20
-        BATCH_SIZE = 128
+        EPOCHS = 100
+        BATCH_SIZE = 200
         N = self.training_data.x_train.shape[0]
 
         self.session.run(tf.global_variables_initializer())
@@ -56,7 +56,7 @@ class Model(object):
                 eindex = sindex + BATCH_SIZE
                 features,labels=self.training_data.x_train[sindex:eindex],self.training_data.y_train[sindex:eindex]
                 self.session.run(self.training_operation,feed_dict={self.p_features:features,self.p_labels:labels})
-                if ((sindex//BATCH_SIZE) % 20 == 0 ): print(".",end="",flush=True)
+                if ((sindex//BATCH_SIZE) % 10 == 0 ): print(".",end="",flush=True)
 
 
             features,labels=self.training_data.x_valid,self.training_data.y_valid
@@ -101,31 +101,43 @@ class Model(object):
         network=tf.nn.max_pool(network,[1,2,2,1],[1,2,2,1],'VALID')
 
         #-----------------------------------------------------------------------------
-        # TODO: Flatten. Input = 8x8x16. Output = 1024.
+        # TODO: Flatten. Input = 4x4x32. Output = 512
         tensor_size = 8*8*16
         network = tf.contrib.layers.flatten(network,[1,tensor_size])
 
         #-----------------------------------------------------------------------------
-        # TODO: Layer 3: Fully Connected. Input = 1024. Output = 256.
-        input_size, output_size = 8*8*16 , 256
+        # TODO: Layer 4: Fully Connected. Input = 1024 . Output = 100.
+        input_size, output_size =1024,512
         weights=tf.Variable(tf.truncated_normal((input_size,output_size),mean,standard_deviation))
         biases=tf.Variable(tf.zeros(output_size,1))
         network = tf.matmul(network,weights)
         network=tf.nn.bias_add(network,biases)
         network=tf.nn.relu(network)
         network=tf.nn.dropout(network,dropout)
+
         #-----------------------------------------------------------------------------
-        # TODO: Layer 4: Fully Connected. Input = 256. Output = 100.
-        input_size, output_size = 256,100
+        # TODO: Layer 4: Fully Connected. Input = 512 . Output = 100.
+        input_size, output_size = 512,256
         weights=tf.Variable(tf.truncated_normal((input_size,output_size),mean,standard_deviation))
         biases=tf.Variable(tf.zeros(output_size,1))
         network = tf.matmul(network,weights)
         network=tf.nn.bias_add(network,biases)
         network=tf.nn.relu(network)
         network=tf.nn.dropout(network,dropout)
+
+        #-----------------------------------------------------------------------------
+        # TODO: Layer 4: Fully Connected. Input = 256. Output = 96.
+        input_size, output_size = 256,96
+        weights=tf.Variable(tf.truncated_normal((input_size,output_size),mean,standard_deviation))
+        biases=tf.Variable(tf.zeros(output_size,1))
+        network = tf.matmul(network,weights)
+        network=tf.nn.bias_add(network,biases)
+        network=tf.nn.relu(network)
+        network=tf.nn.dropout(network,dropout)
+
         #-----------------------------------------------------------------------------
         # TODO: Layer 5: Output Layer : Fully Connected. Input = 100. Output = 43.
-        input_size, output_size = 100,43
+        input_size, output_size = 96,43
         weights=tf.Variable(tf.truncated_normal((input_size,output_size),mean,standard_deviation))
         biases=tf.Variable(tf.zeros(output_size,1))
         network = tf.matmul(network,weights)
