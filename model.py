@@ -25,7 +25,7 @@ class Model(object):
 
     def init_hyper_params(self):
 
-        self.learning_rate=0.001
+        self.learning_rate=0.0007
 
     def init_network_params(self):
         self.p_features = tf.placeholder(tf.float32, [None, 32,32,1])
@@ -45,8 +45,8 @@ class Model(object):
 
     def train(self):
 
-        EPOCHS = 100
-        BATCH_SIZE = 200
+        EPOCHS = 18
+        BATCH_SIZE = 128
         N = self.training_data.x_train.shape[0]
 
         self.session.run(tf.global_variables_initializer())
@@ -80,7 +80,7 @@ class Model(object):
         dropout = 0.5
         #-----------------------------------------------------------------------------
         # TODO: Layer 1: Convolutional. Input = 32x32x1. Output = 32x32x8.
-        filter_size,inp_channels,out_channels = 5,1,8
+        filter_size,inp_channels,out_channels = 5,1,32
         weights=tf.Variable(tf.truncated_normal((filter_size,filter_size,inp_channels,out_channels),mean,standard_deviation))
         biases=tf.Variable(tf.zeros(out_channels,1))
         network=tf.nn.conv2d(self.p_features,weights,[1,1,1,1],'SAME')
@@ -91,7 +91,18 @@ class Model(object):
 
         #-----------------------------------------------------------------------------
         # TODO: Layer 2: Convolutional. Input = 16x16x8 , Output = 16x16x16.
-        filter_size,inp_channels,out_channels = 5,8,16
+        filter_size,inp_channels,out_channels = 5,32,64
+        weights=tf.Variable(tf.truncated_normal((filter_size,filter_size,inp_channels,out_channels),mean,standard_deviation))
+        biases=tf.Variable(tf.zeros(out_channels,1))
+        network=tf.nn.conv2d(network,weights,[1,1,1,1],'SAME')
+        network=tf.nn.bias_add(network,biases)
+        network=tf.nn.relu(network)
+        # TODO: Pooling. Input = 16x16x16. Output = 8x8x16.
+        network=tf.nn.max_pool(network,[1,2,2,1],[1,2,2,1],'VALID')
+
+        #-----------------------------------------------------------------------------
+        # TODO: Layer 2: Convolutional. Input = 16x16x8 , Output = 16x16x16.
+        filter_size,inp_channels,out_channels = 5,64,128
         weights=tf.Variable(tf.truncated_normal((filter_size,filter_size,inp_channels,out_channels),mean,standard_deviation))
         biases=tf.Variable(tf.zeros(out_channels,1))
         network=tf.nn.conv2d(network,weights,[1,1,1,1],'SAME')
@@ -102,12 +113,12 @@ class Model(object):
 
         #-----------------------------------------------------------------------------
         # TODO: Flatten. Input = 4x4x32. Output = 512
-        tensor_size = 8*8*16
+        tensor_size = 4*4*128
         network = tf.contrib.layers.flatten(network,[1,tensor_size])
 
         #-----------------------------------------------------------------------------
         # TODO: Layer 4: Fully Connected. Input = 1024 . Output = 100.
-        input_size, output_size =1024,512
+        input_size, output_size =2048,1024
         weights=tf.Variable(tf.truncated_normal((input_size,output_size),mean,standard_deviation))
         biases=tf.Variable(tf.zeros(output_size,1))
         network = tf.matmul(network,weights)
@@ -117,7 +128,7 @@ class Model(object):
 
         #-----------------------------------------------------------------------------
         # TODO: Layer 4: Fully Connected. Input = 512 . Output = 100.
-        input_size, output_size = 512,256
+        input_size, output_size = 1024,256
         weights=tf.Variable(tf.truncated_normal((input_size,output_size),mean,standard_deviation))
         biases=tf.Variable(tf.zeros(output_size,1))
         network = tf.matmul(network,weights)
@@ -125,19 +136,10 @@ class Model(object):
         network=tf.nn.relu(network)
         network=tf.nn.dropout(network,dropout)
 
-        #-----------------------------------------------------------------------------
-        # TODO: Layer 4: Fully Connected. Input = 256. Output = 96.
-        input_size, output_size = 256,96
-        weights=tf.Variable(tf.truncated_normal((input_size,output_size),mean,standard_deviation))
-        biases=tf.Variable(tf.zeros(output_size,1))
-        network = tf.matmul(network,weights)
-        network=tf.nn.bias_add(network,biases)
-        network=tf.nn.relu(network)
-        network=tf.nn.dropout(network,dropout)
 
         #-----------------------------------------------------------------------------
         # TODO: Layer 5: Output Layer : Fully Connected. Input = 100. Output = 43.
-        input_size, output_size = 96,43
+        input_size, output_size = 256,43
         weights=tf.Variable(tf.truncated_normal((input_size,output_size),mean,standard_deviation))
         biases=tf.Variable(tf.zeros(output_size,1))
         network = tf.matmul(network,weights)
