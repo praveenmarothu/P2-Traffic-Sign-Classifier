@@ -3,8 +3,14 @@ from training_data import TrainingData
 import numpy as np
 from sklearn.utils import shuffle
 import sys
+import os
+import pickle
+
 
 class Model(object):
+
+    trained_model=None
+
     def __init__(self):
         self.training_data=TrainingData.get_data()   # type : TrainingData
 
@@ -26,6 +32,8 @@ class Model(object):
     def init_hyper_params(self):
 
         self.learning_rate=0.0007
+        self.epochs=20
+        self.batch_size=128
 
     def init_network_params(self):
         self.p_features = tf.placeholder(tf.float32, [None, 32,32,1])
@@ -45,8 +53,8 @@ class Model(object):
 
     def train(self):
 
-        EPOCHS = 18
-        BATCH_SIZE = 128
+        EPOCHS = self.epochs
+        BATCH_SIZE = self.batch_size
         N = self.training_data.x_train.shape[0]
 
         self.session.run(tf.global_variables_initializer())
@@ -63,13 +71,29 @@ class Model(object):
             a_output = self.session.run(self.accuracy_operation,feed_dict={self.p_features:features,self.p_labels:labels})
             print(":" , a_output)
 
+        features,labels=self.training_data.x_test,self.training_data.y_test
+        a_output = self.session.run(self.accuracy_operation,feed_dict={self.p_features:features,self.p_labels:labels})
+        print("Testing Accuracy :" , a_output)
 
 
     def predict(self):
         pass
 
-    def get_trained_model(self):
-        pass
+    @classmethod
+    def get_trained_model(cls):
+        if cls.trained_model is not None:
+            return cls.trained_model
+        elif os.path.isfile("pickled/trained_model.p"):
+            with open('pickled/trained_model.p', 'rb') as f:
+                cls.trained_model = pickle.load(f)
+        else:
+            cls.trained_model=Model()
+            cls.trained_model.init()
+            cls.trained_model.train()
+            with open('pickled/trained_model.p', 'wb') as f:
+                pickle.dump(cls.trained_model,f)
+
+        return cls.trained_model
 
 
 
