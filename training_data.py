@@ -90,12 +90,14 @@ class TrainingData(object):
 
         for img in self.x_train:
             img=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            img= (np.float32(img)-np.min(img))/( np.max(img) - np.min(img) )
+            #img= (np.float32(img)-np.min(img))/( np.max(img) - np.min(img) )
+            img = img / 255. * 0.8 + 0.1
             _x_train.append(img)
 
         for img in self.x_test:
             img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-            img= (np.float32(img)-np.min(img))/( np.max(img) - np.min(img) )
+            #img= (np.float32(img)-np.min(img))/( np.max(img) - np.min(img) )
+            img = img / 255. * 0.8 + 0.1
             _x_test.append(img)
 
         self.x_train=np.array(_x_train)

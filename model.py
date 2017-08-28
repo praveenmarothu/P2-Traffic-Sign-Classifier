@@ -31,7 +31,7 @@ class Model(object):
 
     def init_hyper_params(self):
 
-        self.learning_rate=0.0007
+        self.learning_rate=0.001
         self.epochs=20
         self.batch_size=128
 
