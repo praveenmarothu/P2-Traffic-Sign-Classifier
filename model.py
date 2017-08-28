@@ -75,25 +75,11 @@ class Model(object):
         a_output = self.session.run(self.accuracy_operation,feed_dict={self.p_features:features,self.p_labels:labels})
         print("Testing Accuracy :" , a_output)
 
+        saver = tf.train.Saver()
+        saver.save(self.session, "saved_models/model1")
 
     def predict(self):
         pass
-
-    @classmethod
-    def get_trained_model(cls):
-        if cls.trained_model is not None:
-            return cls.trained_model
-        elif os.path.isfile("pickled/trained_model.p"):
-            with open('pickled/trained_model.p', 'rb') as f:
-                cls.trained_model = pickle.load(f)
-        else:
-            cls.trained_model=Model()
-            cls.trained_model.init()
-            cls.trained_model.train()
-            with open('pickled/trained_model.p', 'wb') as f:
-                pickle.dump(cls.trained_model,f)
-
-        return cls.trained_model
 
 
 

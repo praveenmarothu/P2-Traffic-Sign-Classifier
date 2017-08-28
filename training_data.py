@@ -21,6 +21,8 @@ class TrainingData(object):
         self.x_test , self.y_test = None,None
         self.x_valid , self.y_valid = None,None
 
+
+
         self.load()
         self.image_grayscale_normalize()
         self.plot_histogram("output_images/loaded_train_histogram.png")
@@ -88,21 +90,39 @@ class TrainingData(object):
         _x_train=[]
         _x_test=[]
 
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(4,4))
+
         for img in self.x_train:
             img=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            #img= (np.float32(img)-np.min(img))/( np.max(img) - np.min(img) )
-            img = img / 255. * 0.8 + 0.1
+            img = clahe.apply(img)
+            img= (np.float32(img)-np.min(img))/( np.max(img) - np.min(img) )
             _x_train.append(img)
 
         for img in self.x_test:
             img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-            #img= (np.float32(img)-np.min(img))/( np.max(img) - np.min(img) )
-            img = img / 255. * 0.8 + 0.1
+            img = clahe.apply(img)
+            img= (np.float32(img)-np.min(img))/( np.max(img) - np.min(img) )
             _x_test.append(img)
 
         self.x_train=np.array(_x_train)
         self.x_test=np.array(_x_test)
 
+    def image_normalize(self):
+        _x_train=[]
+        _x_test=[]
+
+        for img in self.x_train:
+            img = cv2.equalizeHist(np.uint8(img))
+            img = np.float32(img) - np.mean(img)
+            _x_train.append(img)
+
+        for img in self.x_test:
+            img = cv2.equalizeHist(np.uint8(img))
+            img = np.float32(img) - np.mean(img)
+            _x_test.append(img)
+
+        self.x_train=np.array(_x_train)
+        self.x_test=np.array(_x_test)
 
     def image_random_transform(self,img):
         image_size = img.shape[0]
