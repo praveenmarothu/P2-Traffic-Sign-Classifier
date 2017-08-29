@@ -75,10 +75,10 @@ class Model(object):
         saver.save(session, "saved_models/model1")
 
     def test(self):
+        saver = tf.train.Saver()
         session = tf.Session()
         session.run(tf.global_variables_initializer())
-        loader = tf.train.import_meta_graph('./saved_models/model1.meta')
-        loader.restore(session, './saved_models/model1')
+        saver.restore(session, './saved_models/model1')
         features,labels=self.training_data.x_test,self.training_data.y_test
         a_output = session.run(self.accuracy_operation,feed_dict={self.p_features:features,self.p_labels:labels})
         print("Testing Accuracy :" , a_output)
