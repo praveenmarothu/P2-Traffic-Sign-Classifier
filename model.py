@@ -17,7 +17,6 @@ class Model(object):
         self.network = None
         self.training_operation = None
         self.accuracy_operation = None
-        self.session = tf.Session()
         self.saved_model = None
 
 
@@ -57,26 +56,32 @@ class Model(object):
         BATCH_SIZE = self.batch_size
         N = self.training_data.x_train.shape[0]
 
-        self.session.run(tf.global_variables_initializer())
+        session = tf.Session()
+        session.run(tf.global_variables_initializer())
 
         for epoch in range(EPOCHS):
             for sindex in range(0,N,BATCH_SIZE):
                 eindex = sindex + BATCH_SIZE
                 features,labels=self.training_data.x_train[sindex:eindex],self.training_data.y_train[sindex:eindex]
-                self.session.run(self.training_operation,feed_dict={self.p_features:features,self.p_labels:labels})
+                session.run(self.training_operation,feed_dict={self.p_features:features,self.p_labels:labels})
                 if ((sindex//BATCH_SIZE) % 10 == 0 ): print(".",end="",flush=True)
 
 
             features,labels=self.training_data.x_valid,self.training_data.y_valid
-            a_output = self.session.run(self.accuracy_operation,feed_dict={self.p_features:features,self.p_labels:labels})
+            a_output = session.run(self.accuracy_operation,feed_dict={self.p_features:features,self.p_labels:labels})
             print(":" , a_output)
 
-        features,labels=self.training_data.x_test,self.training_data.y_test
-        a_output = self.session.run(self.accuracy_operation,feed_dict={self.p_features:features,self.p_labels:labels})
-        print("Testing Accuracy :" , a_output)
-
         saver = tf.train.Saver()
-        saver.save(self.session, "saved_models/model1")
+        saver.save(session, "saved_models/model1")
+
+    def test(self):
+        session = tf.Session()
+        session.run(tf.global_variables_initializer())
+        loader = tf.train.import_meta_graph('./saved_models/model1.meta')
+        loader.restore(session, './saved_models/model1')
+        features,labels=self.training_data.x_test,self.training_data.y_test
+        a_output = session.run(self.accuracy_operation,feed_dict={self.p_features:features,self.p_labels:labels})
+        print("Testing Accuracy :" , a_output)
 
     def predict(self):
         pass
@@ -164,6 +169,8 @@ if __name__ == "__main__":
 
     model = Model()
     model.init()
-    model.train()
+    model.test()
+    #model.init()
+    #model.train()
 
 

@@ -107,22 +107,7 @@ class TrainingData(object):
         self.x_train=np.array(_x_train)
         self.x_test=np.array(_x_test)
 
-    def image_normalize(self):
-        _x_train=[]
-        _x_test=[]
 
-        for img in self.x_train:
-            img = cv2.equalizeHist(np.uint8(img))
-            img = np.float32(img) - np.mean(img)
-            _x_train.append(img)
-
-        for img in self.x_test:
-            img = cv2.equalizeHist(np.uint8(img))
-            img = np.float32(img) - np.mean(img)
-            _x_test.append(img)
-
-        self.x_train=np.array(_x_train)
-        self.x_test=np.array(_x_test)
 
     def image_random_transform(self,img):
         image_size = img.shape[0]
