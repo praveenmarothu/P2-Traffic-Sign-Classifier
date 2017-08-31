@@ -1,15 +1,18 @@
+import glob
+
+import cv2
 import tensorflow as tf
-from training_data import TrainingData
 import numpy as np
 from sklearn.utils import shuffle
 import sys
 import os
 import pickle
-
+from image_processor import ImageProcessor
+from training_data import TrainingData
 
 class Model(object):
 
-    trained_model=None
+    saved_model_session=None
 
     def __init__(self):
         self.training_data=TrainingData.get_data()   # type : TrainingData
@@ -17,16 +20,14 @@ class Model(object):
         self.network = None
         self.training_operation = None
         self.accuracy_operation = None
-        self.saved_model = None
-
-
-    def init(self):
-
+        self.top_k_operation = None
+        #init
         self.init_hyper_params()
         self.init_network_params()
         self.create_network()
         self.create_training_operation()
         self.create_accuracy_operation()
+        self.create_top_k_operation()
 
     def init_hyper_params(self):
 
@@ -43,49 +44,13 @@ class Model(object):
         loss_operation = tf.reduce_mean(cross_entropy)
         self.training_operation  = tf.train.AdamOptimizer(learning_rate = self.learning_rate).minimize(loss_operation)
 
+    def create_top_k_operation(self):
+        softmax_logits = tf.nn.softmax(logits=self.network)
+        self.top_k_operation = tf.nn.top_k(softmax_logits, k=3)
 
     def create_accuracy_operation(self):
         correct_prediction = tf.equal(tf.argmax(self.network, 1), tf.argmax(self.p_labels, 1))
         self.accuracy_operation = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
-
-
-    def train(self):
-
-        EPOCHS = self.epochs
-        BATCH_SIZE = self.batch_size
-        N = self.training_data.x_train.shape[0]
-
-        session = tf.Session()
-        session.run(tf.global_variables_initializer())
-
-        for epoch in range(EPOCHS):
-            for sindex in range(0,N,BATCH_SIZE):
-                eindex = sindex + BATCH_SIZE
-                features,labels=self.training_data.x_train[sindex:eindex],self.training_data.y_train[sindex:eindex]
-                session.run(self.training_operation,feed_dict={self.p_features:features,self.p_labels:labels})
-                if ((sindex//BATCH_SIZE) % 10 == 0 ): print(".",end="",flush=True)
-
-
-            features,labels=self.training_data.x_valid,self.training_data.y_valid
-            a_output = session.run(self.accuracy_operation,feed_dict={self.p_features:features,self.p_labels:labels})
-            print(":" , a_output)
-
-        saver = tf.train.Saver()
-        saver.save(session, "saved_models/model1")
-
-    def test(self):
-        saver = tf.train.Saver()
-        session = tf.Session()
-        session.run(tf.global_variables_initializer())
-        saver.restore(session, './saved_models/model1')
-        features,labels=self.training_data.x_test,self.training_data.y_test
-        a_output = session.run(self.accuracy_operation,feed_dict={self.p_features:features,self.p_labels:labels})
-        print("Testing Accuracy :" , a_output)
-
-    def predict(self):
-        pass
-
 
 
 
@@ -165,12 +130,76 @@ class Model(object):
         self.network=network
 
 
-if __name__ == "__main__":
 
-    model = Model()
-    model.init()
-    model.test()
-    #model.init()
-    #model.train()
+    def train(self):
+
+        EPOCHS = self.epochs
+        BATCH_SIZE = self.batch_size
+        N = self.training_data.x_train.shape[0]
+
+        session = tf.Session()
+        session.run(tf.global_variables_initializer())
+
+        for epoch in range(EPOCHS):
+            for sindex in range(0,N,BATCH_SIZE):
+                eindex = sindex + BATCH_SIZE
+                features,labels=self.training_data.x_train[sindex:eindex],self.training_data.y_train[sindex:eindex]
+                session.run(self.training_operation,feed_dict={self.p_features:features,self.p_labels:labels})
+                if ((sindex//BATCH_SIZE) % 10 == 0 ): print(".",end="",flush=True)
+
+
+            features,labels=self.training_data.x_valid,self.training_data.y_valid
+            a_output = session.run(self.accuracy_operation,feed_dict={self.p_features:features,self.p_labels:labels})
+            print(":" , a_output)
+
+        saver = tf.train.Saver()
+        saver.save(session, "saved_models/model1")
+
+    def test(self):
+        session = Model.get_saved_model_session()
+        features,labels=self.training_data.x_test,self.training_data.y_test
+        a_output = session.run(self.accuracy_operation,feed_dict={self.p_features:features,self.p_labels:labels})
+        print("Testing Accuracy :" , a_output)
+
+    def predict(self,imgs,labels):
+        session = Model.get_saved_model_session()
+        _imgs=[]
+
+        for img in imgs: _imgs.append( ImageProcessor.grayscale_normalize(img) )
+
+        imgs = np.array(_imgs)
+        imgs = np.reshape(imgs,(-1,32,32,1) )
+
+        values,indices = session.run(self.top_k_operation,feed_dict = {self.p_features:imgs})
+        signnames = TrainingData.get_signnames()
+
+        for idx,pset in enumerate(indices):
+            print("")
+            print( '=======================================================')
+            print("Correct Sign :", labels[idx],"-",signnames[labels[idx]])
+            print( '-------------------------------------------------------')
+            print( '{0:7.2%} : {1: <2} - {2: <40}'.format(values[idx][0],pset[0],signnames[pset[0]]))
+            print( '{0:7.2%} : {1: <2} - {2: <40}'.format(values[idx][1],pset[1],signnames[pset[1]]))
+            print( '{0:7.2%} : {1: <2} - {2: <40}'.format(values[idx][2],pset[2],signnames[pset[2]]))
+
+        print( '-------------------------------------------------------')
+
+    @classmethod
+    def get_saved_model_session(cls):
+
+        if cls.saved_model_session != None:
+            return cls.saved_model_session
+
+        if not os.path.isfile("./saved_models/model1.meta"):
+            model = Model()
+            model.train()
+
+        saver = tf.train.Saver()
+        cls.saved_model_session = tf.Session()
+        cls.saved_model_session.run(tf.global_variables_initializer())
+        saver.restore(cls.saved_model_session, './saved_models/model1')
+        return cls.saved_model_session
+
+
 
 

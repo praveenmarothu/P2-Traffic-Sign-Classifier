@@ -4,13 +4,11 @@ import matplotlib
 matplotlib.use('agg')
 from matplotlib import pyplot as plt
 import numpy as np
-from skimage.transform import rotate
-from skimage.transform import warp
-from skimage.transform import ProjectiveTransform,AffineTransform
-import random
 import cv2
 import os
 from sklearn.utils import shuffle
+from image_processor import ImageProcessor
+import csv
 
 class TrainingData(object):
 
@@ -20,8 +18,6 @@ class TrainingData(object):
         self.x_train , self.y_train = None,None
         self.x_test , self.y_test = None,None
         self.x_valid , self.y_valid = None,None
-
-
 
         self.load()
         self.image_grayscale_normalize()
@@ -76,7 +72,7 @@ class TrainingData(object):
             idx,counter,target=0,c_length,1200
 
             while counter<=target:
-                _x_train.append(self.image_random_transform(imgs[idx]))
+                _x_train.append(ImageProcessor.random_transform(imgs[idx]))
                 _y_train.append(cls)
 
                 counter+=1
@@ -90,46 +86,11 @@ class TrainingData(object):
         _x_train=[]
         _x_test=[]
 
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(4,4))
-
-        for img in self.x_train:
-            img=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            img = clahe.apply(img)
-            img= (np.float32(img)-np.min(img))/( np.max(img) - np.min(img) )
-            _x_train.append(img)
-
-        for img in self.x_test:
-            img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-            img = clahe.apply(img)
-            img= (np.float32(img)-np.min(img))/( np.max(img) - np.min(img) )
-            _x_test.append(img)
+        for img in self.x_train: _x_train.append(ImageProcessor.grayscale_normalize(img))
+        for img in self.x_test: _x_test.append(ImageProcessor.grayscale_normalize(img))
 
         self.x_train=np.array(_x_train)
         self.x_test=np.array(_x_test)
-
-
-
-    def image_random_transform(self,img):
-        image_size = img.shape[0]
-        d = image_size * 0.2
-        tl_top,tl_left,bl_bottom,bl_left,tr_top,tr_right,br_bottom,br_right = np.random.uniform(-d, d,size=8)   # Bottom right corner, right margin
-        aft=  AffineTransform(scale=(1, 1/1.2))
-        img= warp(img, aft,output_shape=(image_size, image_size), order = 1, mode = 'edge')
-        transform = ProjectiveTransform()
-        transform.estimate(np.array((
-                (tl_left, tl_top),
-                (bl_left, image_size - bl_bottom),
-                (image_size - br_right, image_size - br_bottom),
-                (image_size - tr_right, tr_top)
-            )), np.array((
-                (0, 0),
-                (0, image_size),
-                (image_size, image_size),
-                (image_size, 0)
-            )))
-
-        img = warp(img, transform, output_shape=(image_size, image_size), order = 1, mode = 'edge')
-        return img
 
     def one_hot_encode_labels(self):
         n_classes=len(np.unique(self.y_train))
@@ -155,6 +116,19 @@ class TrainingData(object):
                 pickle.dump(cls.data,f)
 
         return cls.data
+
+    @classmethod
+    def get_signnames(cls):
+
+        signnames = {}
+        with open('signnames.csv', 'r') as file:
+            reader = csv.reader(file, delimiter=',')
+            for row in reader:
+                if len(row) != 2 or not row[0].isdigit():
+                    continue
+                c = int(row[0])
+                signnames[c] = row[1]
+        return signnames
 
 if __name__ == "__main__":
     td = TrainingData.get_data()
