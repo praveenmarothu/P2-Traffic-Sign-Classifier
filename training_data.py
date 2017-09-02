@@ -15,9 +15,11 @@ class TrainingData(object):
     data=None
 
     def __init__(self):
+
         self.x_train , self.y_train = None,None
         self.x_test , self.y_test = None,None
         self.x_valid , self.y_valid = None,None
+
 
         self.load()
         self.image_grayscale_normalize()
