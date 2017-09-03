@@ -59,45 +59,45 @@ class Model(object):
         standard_deviation = 0.1
         dropout = 0.5
         #-----------------------------------------------------------------------------
-        # TODO: Layer 1: Convolutional. Input = 32x32x1. Output = 32x32x8.
+        # TODO: Layer 1: Convolutional. Input = 32x32x1. Output = 32x32x32.
         filter_size,inp_channels,out_channels = 5,1,32
         weights=tf.Variable(tf.truncated_normal((filter_size,filter_size,inp_channels,out_channels),mean,standard_deviation))
         biases=tf.Variable(tf.zeros(out_channels,1))
         network=tf.nn.conv2d(self.p_features,weights,[1,1,1,1],'SAME')
         network=tf.nn.bias_add(network,biases)
         network=tf.nn.relu(network)
-        # TODO: Pooling. Input = 32x32x8. Output = 16x16x8.
+        # TODO: Pooling. Input = 32x32x32. Output = 16x16x32.
         network=tf.nn.max_pool(network,[1,2,2,1],[1,2,2,1],'VALID')
 
         #-----------------------------------------------------------------------------
-        # TODO: Layer 2: Convolutional. Input = 16x16x8 , Output = 16x16x16.
+        # TODO: Layer 2: Convolutional. Input = 16x16x32 , Output = 16x16x64.
         filter_size,inp_channels,out_channels = 5,32,64
         weights=tf.Variable(tf.truncated_normal((filter_size,filter_size,inp_channels,out_channels),mean,standard_deviation))
         biases=tf.Variable(tf.zeros(out_channels,1))
         network=tf.nn.conv2d(network,weights,[1,1,1,1],'SAME')
         network=tf.nn.bias_add(network,biases)
         network=tf.nn.relu(network)
-        # TODO: Pooling. Input = 16x16x16. Output = 8x8x16.
+        # TODO: Pooling. Input = 16x16x64. Output = 8x8x64.
         network=tf.nn.max_pool(network,[1,2,2,1],[1,2,2,1],'VALID')
 
         #-----------------------------------------------------------------------------
-        # TODO: Layer 2: Convolutional. Input = 16x16x8 , Output = 16x16x16.
+        # TODO: Layer 2: Convolutional. Input = 8x8x64 , Output = 8x8x128.
         filter_size,inp_channels,out_channels = 5,64,128
         weights=tf.Variable(tf.truncated_normal((filter_size,filter_size,inp_channels,out_channels),mean,standard_deviation))
         biases=tf.Variable(tf.zeros(out_channels,1))
         network=tf.nn.conv2d(network,weights,[1,1,1,1],'SAME')
         network=tf.nn.bias_add(network,biases)
         network=tf.nn.relu(network)
-        # TODO: Pooling. Input = 16x16x16. Output = 8x8x16.
+        # TODO: Pooling. Input = 8x8x128. Output = 4x4x128.
         network=tf.nn.max_pool(network,[1,2,2,1],[1,2,2,1],'VALID')
 
         #-----------------------------------------------------------------------------
-        # TODO: Flatten. Input = 4x4x32. Output = 512
+        # TODO: Flatten. Input = 4x4x128. Output = 2048
         tensor_size = 4*4*128
         network = tf.contrib.layers.flatten(network,[1,tensor_size])
 
         #-----------------------------------------------------------------------------
-        # TODO: Layer 4: Fully Connected. Input = 1024 . Output = 100.
+        # TODO: Layer 4: Fully Connected. Input = 2048 . Output = 1024.
         input_size, output_size =2048,1024
         weights=tf.Variable(tf.truncated_normal((input_size,output_size),mean,standard_deviation))
         biases=tf.Variable(tf.zeros(output_size,1))
@@ -107,7 +107,7 @@ class Model(object):
         network=tf.nn.dropout(network,dropout)
 
         #-----------------------------------------------------------------------------
-        # TODO: Layer 4: Fully Connected. Input = 512 . Output = 100.
+        # TODO: Layer 4: Fully Connected. Input = 1024 . Output = 256.
         input_size, output_size = 1024,256
         weights=tf.Variable(tf.truncated_normal((input_size,output_size),mean,standard_deviation))
         biases=tf.Variable(tf.zeros(output_size,1))
@@ -118,7 +118,7 @@ class Model(object):
 
 
         #-----------------------------------------------------------------------------
-        # TODO: Layer 5: Output Layer : Fully Connected. Input = 100. Output = 43.
+        # TODO: Layer 5: Output Layer : Fully Connected. Input = 256. Output = 43.
         input_size, output_size = 256,43
         weights=tf.Variable(tf.truncated_normal((input_size,output_size),mean,standard_deviation))
         biases=tf.Variable(tf.zeros(output_size,1))
