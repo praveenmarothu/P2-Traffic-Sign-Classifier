@@ -320,3 +320,8 @@ The top three soft max probabilities are listed below
 |1.01%|30 - Beware of ice/snow                      
 |0.01%|29 - Bicycles crossing                       
 ||
+
+### (Optional) Visualizing the Neural Network (See Step 4 of the Ipython notebook for more details)
+#### 1. Discuss the visual output of your trained network's feature maps. What characteristics did the neural network use to make classifications?
+
+I will be working on these and will be further refining the model and testing with a lot more distorted images. But due to the term deadline approaching, I am skipping the Optional items.
